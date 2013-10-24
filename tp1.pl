@@ -44,6 +44,45 @@
 library(lists).
 % use_module(library(lists)).
 
+empty_piece(e).
+p1_piece(w).
+p2_piece(b).
+obj_piece(o).
+
+%% board creation - main method is create_board(N, B) - N has to be even %%
+
+create_board(N, B) :-
+    length(B, N),
+    init_board(N, B),
+    create_board_aux(N, 0, B).
+
+init_board(N, B) :-
+    No2m1 is N // 2 - 1,
+    nth0(No2m1, B, MidRow),
+    obj_piece(Piece),
+    nth0(No2m1, MidRow, Piece).
+
+create_board_aux(N, N, _).
+create_board_aux(N, NL, B) :-
+    create_row(N, NL, Row),
+    empty_piece(Piece),
+    init_row(Row, Piece),
+    nth0(NL, B, Row),
+    NL1 is NL + 1,
+    create_board_aux(N, NL1, B).
+
+create_row(N, 0, Row) :-
+    !, No2 is N // 2,
+    length(Row, No2).
+create_row(N, _, Row) :-
+    Nm1 is N - 1,
+    length(Row, Nm1).
+
+init_row([], _).
+init_row([Head |HT], _) :- atom(Head), init_row(HT, Piece).
+init_row([Piece|HT], Piece) :-
+    init_row(HT, Piece).
+
 %% board representation - main method is show_board(B) %%
 
 show_board(B) :-
@@ -53,7 +92,7 @@ show_board(B) :-
     write('    '), draw_letters(Nm1), nl,
     write('  '), draw_slashes(No2), nl,
     show_line(B, 0),
-    write('  '), draw_lower_cell(No2), nl.
+    write('  '), draw_lower_cell(No2), nl, !.
 
 draw_piece(b) :- write(' b ').
 draw_piece(w) :- write(' w ').
