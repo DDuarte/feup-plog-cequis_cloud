@@ -53,20 +53,30 @@ obj_piece(o).
 
 create_board(N, B) :-
     length(B, N),
-    init_board(N, B),
-    create_board_aux(N, 0, B).
+    create_board_aux(N, 0, B),
+    init_board(N, B).
 
 init_board(N, B) :-
+    obj_piece(ObjPiece),
+    p1_piece(P1Piece),
+    p2_piece(P2Piece),
+    empty_piece(Piece),
+    No2m2 is N // 2 - 2,
     No2m1 is N // 2 - 1,
-    nth0(No2m1, B, MidRow),
-    obj_piece(Piece),
-    nth0(No2m1, MidRow, Piece).
+    No2 is N // 2,
+    No2p1 is N // 2 + 1,
+    nth0(No2, B, MidRow), nth0(No2m1, MidRow, ObjPiece),
+                          nth0(No2, MidRow, P2Piece),
+                          nth0(No2m2, MidRow, P2Piece),
+    nth0(No2p1, B, MidRowp1), nth0(No2m1, MidRowp1, P2Piece),
+    nth0(No2m1, B, MidRowm1), nth0(No2, MidRowm1, P1Piece),
+                              nth0(No2m1, MidRowm1, P1Piece),
+                              nth0(No2m2, MidRowm1, P1Piece),
+    init_row(B, Piece).
 
 create_board_aux(N, N, _).
 create_board_aux(N, NL, B) :-
     create_row(N, NL, Row),
-    empty_piece(Piece),
-    init_row(Row, Piece),
     nth0(NL, B, Row),
     NL1 is NL + 1,
     create_board_aux(N, NL1, B).
@@ -79,9 +89,16 @@ create_row(N, _, Row) :-
     length(Row, Nm1).
 
 init_row([], _).
-init_row([Head |HT], _) :- atom(Head), init_row(HT, Piece).
-init_row([Piece|HT], Piece) :-
-    init_row(HT, Piece).
+init_row([B|BT], Piece) :-
+    init_row_aux(B, Piece),
+    init_row(BT, Piece).
+
+init_row_aux([], _).
+init_row_aux([H|HT], Piece) :-
+        nonvar(H),
+        init_row_aux(HT, Piece).
+init_row_aux([Piece|HT], Piece) :-
+    init_row_aux(HT, Piece).
 
 %% board representation - main method is show_board(B) %%
 
@@ -94,6 +111,7 @@ show_board(B) :-
     show_line(B, 0),
     write('  '), draw_lower_cell(No2), nl, !.
 
+draw_piece(x) :- write('err').
 draw_piece(b) :- write(' b ').
 draw_piece(w) :- write(' w ').
 draw_piece(o) :- write(' o ').
@@ -182,6 +200,55 @@ show_piece([LH|LT], LINEN, PIECEN) :-
     draw_piece(LH),
     PIECEN1 is PIECEN + 1,
     show_piece(LT, LINEN, PIECEN1).
+
+%% board/validation %%
+
+initialize(Game) :-
+    create_board(8, Game).
+
+display_game(Game) :-
+    show_board(Game).
+
+play(Game) :-
+    initialize(Game),
+    display_game(Game),
+    play(Game, Player, Result).
+
+game_over([], Player, _) :-
+    Result = Player.
+game_over([Line|Lines], Player, Result) :-
+    obj_piece(ObjPiece),
+    member(ObjPiece, Line), fail.
+
+announce(Result) :-
+    write("Game over, "),
+    write(Result),
+    write(" won!"), nl.
+
+play(Game, Player, Result) :-
+    game_over(Game, Player, Result), !, announce(Result).
+play(Position, Player, Result) :-
+    choose_move(Position, Player, Move),
+    move(Move, Position, Position1),
+    display_game(Position1, Player),
+    next_player(Player, Player1),
+    !, play(Position1, Player1, Result).
+
+%% choose_move(Position, computer, Move) :-
+%%     findall(M, move(Position, M), Moves),
+%%     evaluate_and_choose(Moves, Position, (nil, -1000), Move).
+%% 
+%% evaluate_and_choose([Move|Moves], Position, Record, BestMove) :-
+%%     move(Move, Position, Position1),
+%%     value(Position1, Value),
+%%     update(Move, Value, Record, Record1),
+%%     evaluate_and_choose(Moves, Position, Record1, BestMove).
+%% evaluate_and_choose([], Position, (Move, Value), Move).
+%% 
+%% update(Move, Value, (Move1, Value1), (Move1, Value1)) :-
+%%     Value =< Value1.
+%% update(Move, Value, (Move1, Value1), (Move, Value)) :-
+%%     Value > Value1.
 
 %% helpers %%
 
