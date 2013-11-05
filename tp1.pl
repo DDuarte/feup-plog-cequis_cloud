@@ -49,6 +49,15 @@ p1_piece(w).
 p2_piece(b).
 obj_piece(o).
 
+player(player1).
+player(player2).
+player(computer1).
+player(computer2).
+
+mode(pVSp). %% player vs player %%
+mode(pVSc). %% player vs computer %%
+mode(cVSc). %% computer vs computer %%
+
 %% board creation - main method is create_board(N, B) - N has to be even %%
 
 create_board(N, B) :-
@@ -206,8 +215,7 @@ show_piece([LH|LT], LINEN, PIECEN) :-
 play(Game) :-
     create_board(Game),
     show_board(Game),
-    player(P),
-    play(Game, P, Result).
+    play(Game, player1, pVSp, Result). %% TODO: change this, hardcoded %%
 
 game_over([], Player, Result) :-
     Result = Player.
@@ -222,14 +230,21 @@ announce(Result) :-
     write(Result),
     write(' won!'), nl.
 
-play(Game, Player, Result) :-
+play(Game, Player, _, Result) :-
     game_over(Game, Player, Result), !, announce(Result).
-play(Game, Player, Result) :-
-    choose_move(Game, Player, Move),
-    move(Game, Move, Position),
-    display_game(Position1, Player),
-    next_player(Player, Player1),
-    !, play(Position1, Player1, Result).
+play(Game, Player, Mode, Result) :-
+    choose_move(Game, Player, MoveSrc, MoveDest),
+    move(Game, MoveSrc, MoveDest, Game1),
+    show_board(Game1),
+    next_player(Mode, Player, NextPlayer),
+    !, play(Game1, NextPlayer, Mode, Result).
+
+next_player(pVSp, player1, player2).
+next_player(pVSp, player2, player1).
+next_player(pVSc, player1, computer1).
+next_player(pVSc, computer1, player1).
+next_player(cVSc, computer1, computer2).
+next_player(cVSc, computer2, computer1).
 
 %% movement / validation %%
 
