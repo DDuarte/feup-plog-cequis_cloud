@@ -231,6 +231,34 @@ play(Game, Player, Result) :-
     next_player(Player, Player1),
     !, play(Position1, Player1, Result).
 
+%% movement / validation %%
+
+position(Position, Line, Column) :-
+    nth0(0, Position, Line),
+    nth0(1, Position, Column).
+
+object(Game, Position, X) :-
+    position(Position, LN, CN),
+    nth0(LN, Game, Line),
+    nth0(CN, Line, X).
+
+replace_piece(Game, Piece, Position, Game1) :-
+    position(Position, L, C),
+    nth0(L, Game, Line),
+    replace(Line, C, Piece, Line1),
+    replace(Game, L, Line1, Game1).
+
+swap_piece(Game, Position1, Position2, Game1) :-
+    object(Game, Position1, Piece1),
+    object(Game, Position2, Piece2),
+    replace_piece(Game,   Piece1, Position2, Game11),
+    replace_piece(Game11, Piece2, Position1, Game1).
+
+move(Game, MoveSrc, MoveDest, Game1) :-
+    object(Game, MoveDest, PieceDest),
+    PieceDest = e,
+    swap_piece(Game, MoveSrc, MoveDest, Game1).
+
 %% choose_move(Position, computer, Move) :-
 %%     findall(M, move(Position, M), Moves),
 %%     evaluate_and_choose(Moves, Position, (nil, -1000), Move).
@@ -251,5 +279,8 @@ play(Game, Player, Result) :-
 
 even(N) :- N mod 2 =:= 0.
 odd(N) :- \+ even(N).
+
+replace([_|T], 0, X, [X|T]).
+replace([H|T], I, X, [H|R]):- I > 0, I1 is I-1, replace(T, I1, X, R).
 
 %% show_board([[e, e, e, e], [e, e, e, e, e, e, e], [e, e, e, e, e, e, e], [e, e, w, w, w, e, e], [e, e, b, o, b, e, e], [e, e, e, b, e, e, e], [e, e, e, e, e, e, e], [e, e, e, e, e, e, e]]).
