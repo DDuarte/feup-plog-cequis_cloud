@@ -2,8 +2,13 @@
 %%        FEUP - MIEIC - 2013/2014           %%
 %%                                           %%
 %% Authors:                                  %%
-%% + Duarte Duarte - ei11101@fe.up.pt        %%
-%% + Hugo Freixo   - ei11086@fe.up.pt        %%
+%% - Duarte Duarte - ei11101@fe.up.pt        %%
+%% - Hugo Freixo   - ei11086@fe.up.pt        %%
+%%                                           %%
+%% Instructions:                             %%
+%% - Call play (e.g "play.") predicate       %%
+%% - ...                                     %%
+%% - Profit!                                 %%
 %%                                           %%
 %%      a   b   c   d   e   f   g            %%
 %%     ___     ___     ___     ___           %%
@@ -210,12 +215,12 @@ show_piece([LH|LT], LINEN, PIECEN) :-
     PIECEN1 is PIECEN + 1,
     show_piece(LT, LINEN, PIECEN1).
 
-%% game beginning and ending - main method is play(Game) %%
+%% game beginning and ending - main method is play %%
 
-play(Game) :-
-    create_board(Game),
+play :- %% TODO: (8, player1, pVSp), ask board size, starting player and game mode %%
+    create_board(8, Game),
     show_board(Game),
-    play(Game, player1, pVSp, Result). %% TODO: change this, hardcoded %%
+    play(Game, player1, pVSp, Result).
 
 game_over([], Player, Result) :-
     Result = Player.
