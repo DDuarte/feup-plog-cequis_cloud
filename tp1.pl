@@ -201,35 +201,32 @@ show_piece([LH|LT], LINEN, PIECEN) :-
     PIECEN1 is PIECEN + 1,
     show_piece(LT, LINEN, PIECEN1).
 
-%% board/validation %%
-
-initialize(Game) :-
-    create_board(8, Game).
-
-display_game(Game) :-
-    show_board(Game).
+%% game beginning and ending - main method is play(Game) %%
 
 play(Game) :-
-    initialize(Game),
-    display_game(Game),
-    play(Game, Player, Result).
+    create_board(Game),
+    show_board(Game),
+    player(P),
+    play(Game, P, Result).
 
-game_over([], Player, _) :-
+game_over([], Player, Result) :-
     Result = Player.
-game_over([Line|Lines], Player, Result) :-
+game_over([Line|Lines], Player, _) :-
     obj_piece(ObjPiece),
-    member(ObjPiece, Line), fail.
+    member(ObjPiece, Line), !, fail.
+game_over([Line|Lines], Player, Result) :-
+    game_over(Lines, Player, Result).
 
 announce(Result) :-
-    write("Game over, "),
+    write('Game over, '),
     write(Result),
-    write(" won!"), nl.
+    write(' won!'), nl.
 
 play(Game, Player, Result) :-
     game_over(Game, Player, Result), !, announce(Result).
-play(Position, Player, Result) :-
-    choose_move(Position, Player, Move),
-    move(Move, Position, Position1),
+play(Game, Player, Result) :-
+    choose_move(Game, Player, Move),
+    move(Game, Move, Position),
     display_game(Position1, Player),
     next_player(Player, Player1),
     !, play(Position1, Player1, Result).
