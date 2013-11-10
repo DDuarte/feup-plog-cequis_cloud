@@ -6,7 +6,7 @@
 %% - Hugo Freixo   - ei11086@fe.up.pt        %%
 %%                                           %%
 %% Instructions:                             %%
-%% - Call play (e.g "play.") predicate       %%
+%% - Call play predicate (e.g "play.")       %%
 %% - ...                                     %%
 %% - Profit!                                 %%
 %%                                           %%
@@ -59,9 +59,14 @@ player(player2).
 player(computer1).
 player(computer2).
 
-mode(pVSp). %% player vs player %%
-mode(pVSc). %% player vs computer %%
-mode(cVSc). %% computer vs computer %%
+piece(player1, w).
+piece(player2, b).
+piece(computer1, w).
+piece(computer2, b).
+
+gmode(pVSp). %% player vs player %%
+gmode(pVSc). %% player vs computer %%
+gmode(cVSc). %% computer vs computer %%
 
 %% board creation - main method is create_board(N, B) - N has to be even %%
 
@@ -215,19 +220,19 @@ show_piece([LH|LT], LINEN, PIECEN) :-
     PIECEN1 is PIECEN + 1,
     show_piece(LT, LINEN, PIECEN1).
 
-%% game beginning and ending - main method is play %%
+%% game progression - main method is play %%
 
 play :- %% TODO: (8, player1, pVSp), ask board size, starting player and game mode %%
     create_board(8, Game),
     show_board(Game),
-    play(Game, player1, pVSp, Result).
+    play(Game, player1, pVSp, _).
 
 game_over([], Player, Result) :-
     Result = Player.
-game_over([Line|Lines], Player, _) :-
+game_over([Line|_], _, _) :-
     obj_piece(ObjPiece),
     member(ObjPiece, Line), !, fail.
-game_over([Line|Lines], Player, Result) :-
+game_over([_|Lines], Player, Result) :-
     game_over(Lines, Player, Result).
 
 announce(Result) :-
@@ -238,6 +243,7 @@ announce(Result) :-
 play(Game, Player, _, Result) :-
     game_over(Game, Player, Result), !, announce(Result).
 play(Game, Player, Mode, Result) :-
+    write(Player), write(' turn!'), nl,
     choose_move(Game, Player, MoveSrc, MoveDest),
     move(Game, MoveSrc, MoveDest, Game1),
     show_board(Game1),
@@ -278,6 +284,90 @@ move(Game, MoveSrc, MoveDest, Game1) :-
     object(Game, MoveDest, PieceDest),
     PieceDest = e,
     swap_piece(Game, MoveSrc, MoveDest, Game1).
+
+choose_move_player(Game, Player, MoveSrc, MoveDest) :-
+    write('Move Source Line (number): '),
+    get_char(LSrc), skip_line,
+    write('Move Source Column (letter): '),
+    get_char(CSrc), skip_line,
+    write('Move Dest Line (number): '),
+    get_char(LDest), skip_line,
+    write('Move Dest Column (letter): '),
+    get_char(CDest), skip_line,
+    choose_move_player_aux(Game, Player, LSrc, CSrc, LDest, CDest, MoveSrc, MoveDest).
+
+choose_move_player_aux(Game, Player, LSrc, CSrc, LDest, CDest, MoveSrc, MoveDest) :-
+    \+valid_move(Game, Player, LSrc, CSrc, LDest, CDest, _, _, _, _),
+    write('Invalid '), write(Player), write(' move!!!'), nl,
+    choose_move_player(Game, Player, MoveSrc, MoveDest).
+choose_move_player_aux(Game, Player, LSrc, CSrc, LDest, CDest, MoveSrc, MoveDest) :-
+    valid_move(Game, Player, LSrc, CSrc, LDest, CDest, LiSrc, CiSrc, LiDest, CiDest),
+    MoveSrc = [LiSrc, CiSrc],
+    MoveDest = [LiDest, CiDest].
+
+valid_move(Game, Player, LSrc, CSrc, LDest, CDest, LiSrc, CiSrc, LiDest, CiDest) :-
+    line_to_index(Game, LSrc, LiSrc),
+    column_to_index(Game, LiSrc, CSrc, CiSrc),
+    line_to_index(Game, LDest, LiDest),
+    column_to_index(Game, LiDest, CDest, CiDest),
+    adjacent(LiSrc, CiSrc, LiDest, CiDest),
+    object(Game, [LiSrc, CiSrc], Piece),
+    piece(Player, Piece).                   %% todo: stuff missing here %%
+
+column_to_index(Game, 0, C, I) :-
+    letters(L),
+    nth0(Ii, L, C),
+    I is Ii // 2,
+    length(Game, Len),
+    I < Len // 2.
+column_to_index(Game, _, C, I) :-
+    letters(L),
+    nth0(I, L, C),
+    length(Game, Len),
+    I < Len.
+
+line_to_index(Game, L, I) :-
+    number_chars(Li, [L]),
+    length(Game, Len),
+    I is Len - Li,
+    I > 0.
+
+adjacent(Line, Column, LineTo, Column) :-
+	LineTo is Line + 1.
+adjacent(Line, Column, LineTo, Column) :-
+	LineTo is Line - 1.
+adjacent(Line, Column, Line, ColumnTo) :-
+	ColumnTo = Column + 1.
+adjacent(Line, Column, Line, ColumnTo) :-
+	ColumnTo is Column - 1.	
+adjacent(Line, Column, LineTo, ColumnTo) :-
+	odd(Column),
+	LineTo is Line + 1,
+	ColumnTo is Column + 1.
+adjacent(Line, Column, LineTo, ColumnTo) :-
+	odd(Column),
+	LineTo is Line + 1,
+	ColumnTo is Column - 1.
+adjacent(Line, Column, LineTo, ColumnTo) :-
+	even(Column),
+	LineTo is Line - 1,
+	ColumnTo is Column + 1.
+adjacent(Line, Column, LineTo, ColumnTo) :-
+	even(Column),
+	LineTo is Line - 1,
+	ColumnTo is Column - 1.
+
+choose_move(Game, player1, MoveSrc, MoveDest) :-
+    choose_move_player(Game, player1, MoveSrc, MoveDest).
+
+choose_move(Game, player2, MoveSrc, MoveDest) :-
+    choose_move_player(Game, player2, MoveSrc, MoveDest).
+
+choose_move(Game, computer1, MoveSrc, MoveDest) :-
+    choose_move_computer(Game, computer1, MoveSrc, MoveDest).
+
+choose_move(Game, computer2, MoveSrc, MoveDest) :-
+    choose_move_computer(Game, computer2, MoveSrc, MoveDest).
 
 %% choose_move(Position, computer, Move) :-
 %%     findall(M, move(Position, M), Moves),
