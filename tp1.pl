@@ -292,8 +292,61 @@ move(Game, MoveSrc, MoveDest, Game1) :-
     CD is CS,
     NewL is LD + LD - LS,
     position(NewDest, NewL, CD),
-    move(Game, MoveDest, NewDest, Game1),
-    swap_piece(Game, MoveSrc, MoveDest, Game1).
+    move(Game, MoveDest, NewDest, Game2),
+    swap_piece(Game2, MoveSrc, MoveDest, Game1).
+    
+move(Game, MoveSrc, MoveDest, Game1) :-
+    object(Game, MoveDest, PieceDest),
+    position(MoveDest, LD, CD),
+    position(MoveSrc, LS, CS),
+    LS is LD,
+    odd(CS),
+    NewL is LD - 1,
+    NewC is CD + CD - CS,
+    position(NewDest, NewL, NewC),
+    move(Game, MoveDest, NewDest, Game2),
+    swap_piece(Game2, MoveSrc, MoveDest, Game1).
+
+move(Game, MoveSrc, MoveDest, Game1) :-
+    object(Game, MoveDest, PieceDest),
+    position(MoveDest, LD, CD),
+    position(MoveSrc, LS, CS),
+    LS is LD,
+    even(CS),
+    NewL is LD + 1,
+    NewC is CD + CD - CS,
+    position(NewDest, NewL, NewC),
+    move(Game, MoveDest, NewDest, Game2),
+    swap_piece(Game2, MoveSrc, MoveDest, Game1).
+
+move(Game, MoveSrc, MoveDest, Game1) :-
+    object(Game, MoveDest, PieceDest),
+    position(MoveDest, LD, CD),
+    position(MoveSrc, LS, CS),
+    NewC is CD + CD - CS,
+    position(NewDest, LD, NewC),
+    move(Game, MoveDest, NewDest, Game2),
+    swap_piece(Game2, MoveSrc, MoveDest, Game1).   
+  
+    
+%%      a   b   c   d   e   f   g            %%
+%%     ___     ___     ___     ___           %%
+%% 8  /   \___/   \___/   \___/   \          %%
+%%    \___/   \___/   \___/   \___/          %%
+%% 7  /   \___/   \___/   \___/   \          %%
+%%    \___/   \___/   \___/   \___/          %%
+%% 6  /   \___/   \___/   \___/   \          %%
+%%    \___/   \___/ w \___/   \___/          %%
+%% 5  /   \___/ w \___/ w \___/   \          %%
+%%    \___/   \___/ o \___/   \___/          %%
+%% 4  /   \___/ b \___/ b \___/   \          %%
+%%    \___/   \___/ b \___/   \___/          %%
+%% 3  /   \___/   \___/   \___/   \          %%
+%%    \___/   \___/   \___/   \___/          %%
+%% 2  /   \___/   \___/   \___/   \          %%
+%%    \___/   \___/   \___/   \___/          %%
+%% 1  /   \___/   \___/   \___/   \          %%
+%%    \___/   \___/   \___/   \___/          %%
 
 choose_move_player(Game, Player, MoveSrc, MoveDest) :-
     write('Move Source Line (number): '),
@@ -347,7 +400,7 @@ adjacent(Line, Column, LineTo, Column) :-
 adjacent(Line, Column, LineTo, Column) :-
 	LineTo is Line - 1.
 adjacent(Line, Column, Line, ColumnTo) :-
-	ColumnTo = Column + 1.
+	ColumnTo is Column + 1.
 adjacent(Line, Column, Line, ColumnTo) :-
 	ColumnTo is Column - 1.	
 adjacent(Line, Column, LineTo, ColumnTo) :-
