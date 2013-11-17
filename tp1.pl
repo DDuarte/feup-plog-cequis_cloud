@@ -284,6 +284,16 @@ move(Game, MoveSrc, MoveDest, Game1) :-
     object(Game, MoveDest, PieceDest),
     PieceDest = e,
     swap_piece(Game, MoveSrc, MoveDest, Game1).
+    
+move(Game, MoveSrc, MoveDest, Game1) :-
+    object(Game, MoveDest, PieceDest),
+    position(MoveDest, LD, CD),
+    position(MoveSrc, LS, CS),
+    CD is CS,
+    NewL is LD + LD - LS,
+    position(NewDest, NewL, CD),
+    move(Game, MoveDest, NewDest, Game1),
+    swap_piece(Game, MoveSrc, MoveDest, Game1).
 
 choose_move_player(Game, Player, MoveSrc, MoveDest) :-
     write('Move Source Line (number): '),
