@@ -289,6 +289,11 @@ swap_piece(Game, Position1, Position2, Game1) :-
 move(Game, MoveSrc, MoveDest, Game1) :- % move to empty cell %
     object(Game, MoveDest, e),
     swap_piece(Game, MoveSrc, MoveDest, Game1).
+
+move(Game, MoveSrc, MoveDest, Game1) :- % move objective piece
+    object(Game, MoveSrc, o),
+    \+inbounds(Game, MoveDest),
+    replace_piece(Game, e, MoveSrc, Game1).
     
 move(Game, MoveSrc, MoveDest, Game1) :- % vertical move (same column) %
     position(MoveSrc, LS, CS),
@@ -364,6 +369,11 @@ valid_move(Game, _, LiSrc, CiSrc, LiDest, CiDest) :- % move to empty cell %
     adjacent(LiSrc, CiSrc, LiDest, CiDest),
     object(Game, [LiDest, CiDest], e).
 
+valid_move(Game, _, LiSrc, CiSrc, LiDest, CiDest) :- % move out of board%
+    inbounds(Game, [LiSrc, CiSrc]),
+    \+inbounds(Game, [LiDest, CiDest]),
+    object(Game, [LiSrc, CiSrc], o).
+    
 valid_move(Game, Player, LiSrc, CiSrc, LiDest, CiDest) :- % vertical move (same column) %
     inbounds(Game, [LiSrc, CiSrc]),
     inbounds(Game, [LiDest, CiDest]),
