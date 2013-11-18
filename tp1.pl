@@ -253,8 +253,8 @@ play(Game, Player, Mode, Result) :-
 
 next_player(pVSp, player1, player2).
 next_player(pVSp, player2, player1).
-next_player(pVSc, player1, computer1).
-next_player(pVSc, computer1, player1).
+next_player(pVSc, player1, computer2).
+next_player(pVSc, computer2, player1).
 next_player(cVSc, computer1, computer2).
 next_player(cVSc, computer2, computer1).
 
@@ -262,13 +262,25 @@ next_player(cVSc, computer2, computer1).
 
 inbounds(Game, Position) :-
     position(Position, L, C),
+    var(L), var(C),
+    length(Game, Length),
+    is_in_range(L, 0, Length - 1),
+    is_in_range(C, 0, Length - 2).
+
+inbounds(Game, Position) :-
+    position(Position, L, C),
     length(Game, Length),
     L >= 0, L < Length,
     C >= 0, C < Length - 1.
 
-position(Position, Line, Column) :-
-    nth0(0, Position, Line),
-    nth0(1, Position, Column).
+is_in_range(Max, Max, Max).
+is_in_range(_, Max, Max) :- !, fail.
+is_in_range(Min, Min, _).
+is_in_range(V, Min, Max) :-
+    VV is Min + 1,
+    is_in_range(V, VV, Max).
+
+position([Line, Column], Line, Column).
 
 object(Game, Position, X) :-
     position(Position, LN, CN),
@@ -291,11 +303,11 @@ move(Game, MoveSrc, MoveDest, Game1) :- % move to empty cell %
     object(Game, MoveDest, e),
     swap_piece(Game, MoveSrc, MoveDest, Game1).
 
-move(Game, MoveSrc, MoveDest, Game1) :- % move objective piece
+move(Game, MoveSrc, MoveDest, Game1) :- % move objective piece %
     object(Game, MoveSrc, o),
     \+inbounds(Game, MoveDest),
     replace_piece(Game, e, MoveSrc, Game1).
-    
+
 move(Game, MoveSrc, MoveDest, Game1) :- % vertical move (same column) %
     position(MoveSrc, LS, CS),
     position(MoveDest, LD, CD),
@@ -333,7 +345,7 @@ move(Game, MoveSrc, MoveDest, Game1) :- % different line %
     NewC is CD + CD - CS,
     position(NewDest, LD, NewC),
     move(Game, MoveDest, NewDest, Game2),
-    swap_piece(Game2, MoveSrc, MoveDest, Game1).   
+    swap_piece(Game2, MoveSrc, MoveDest, Game1).
 
 choose_move_player(Game, Player, MoveSrc, MoveDest) :-
     write('Move Source Line (number): '),
@@ -364,6 +376,9 @@ valid_player_move(Game, Player, LSrc, CSrc, LDest, CDest, LiSrc, CiSrc, LiDest, 
     piece(Player, Piece),
     valid_move(Game, Player, LiSrc, CiSrc, LiDest, CiDest).
 
+valid_move(Game, Player, [LiSrc, CiSrc], [LiDest, CiDest]) :- % forward values %
+    valid_move(Game, Player, LiSrc, CiSrc, LiDest, CiDest).
+
 valid_move(Game, _, LiSrc, CiSrc, LiDest, CiDest) :- % move to empty cell %
     inbounds(Game, [LiSrc, CiSrc]),
     inbounds(Game, [LiDest, CiDest]),
@@ -374,7 +389,7 @@ valid_move(Game, _, LiSrc, CiSrc, LiDest, CiDest) :- % move out of board%
     inbounds(Game, [LiSrc, CiSrc]),
     \+inbounds(Game, [LiDest, CiDest]),
     object(Game, [LiSrc, CiSrc], o).
-    
+
 valid_move(Game, Player, LiSrc, CiSrc, LiDest, CiDest) :- % vertical move (same column) %
     inbounds(Game, [LiSrc, CiSrc]),
     inbounds(Game, [LiDest, CiDest]),
@@ -382,7 +397,7 @@ valid_move(Game, Player, LiSrc, CiSrc, LiDest, CiDest) :- % vertical move (same 
     CiDest = CiSrc,
     NewL is LiDest + LiDest - LiSrc,
     valid_move(Game, Player, LiDest, CiDest, NewL, CiDest).
-    
+
 valid_move(Game, Player, LiSrc, CiSrc, LiDest, CiDest) :- % same line, odd column %
     inbounds(Game, [LiSrc, CiSrc]),
     inbounds(Game, [LiDest, CiDest]),
@@ -429,30 +444,32 @@ line_to_index(Game, L, I) :-
     I is Len - Li,
     I > 0.
 
+adjacent([Line, Column], [LineTo, ColumnTo]) :- % forward %
+    adjacent(Line, Column, LineTo, ColumnTo).
 adjacent(Line, Column, LineTo, Column) :-
-	LineTo is Line + 1.
+    LineTo is Line + 1.
 adjacent(Line, Column, LineTo, Column) :-
-	LineTo is Line - 1.
+    LineTo is Line - 1.
 adjacent(Line, Column, Line, ColumnTo) :-
-	ColumnTo is Column + 1.
+    ColumnTo is Column + 1.
 adjacent(Line, Column, Line, ColumnTo) :-
-	ColumnTo is Column - 1.	
+    ColumnTo is Column - 1.
 adjacent(Line, Column, LineTo, ColumnTo) :-
-	even(Column),
-	LineTo is Line + 1,
-	ColumnTo is Column + 1.
+    even(Column),
+    LineTo is Line + 1,
+    ColumnTo is Column + 1.
 adjacent(Line, Column, LineTo, ColumnTo) :-
-	even(Column),
-	LineTo is Line + 1,
-	ColumnTo is Column - 1.
+    even(Column),
+    LineTo is Line + 1,
+    ColumnTo is Column - 1.
 adjacent(Line, Column, LineTo, ColumnTo) :-
-	odd(Column),
-	LineTo is Line - 1,
-	ColumnTo is Column + 1.
+    odd(Column),
+    LineTo is Line - 1,
+    ColumnTo is Column + 1.
 adjacent(Line, Column, LineTo, ColumnTo) :-
-	odd(Column),
-	LineTo is Line - 1,
-	ColumnTo is Column - 1.
+    odd(Column),
+    LineTo is Line - 1,
+    ColumnTo is Column - 1.
 
 choose_move(Game, player1, MoveSrc, MoveDest) :-
     choose_move_player(Game, player1, MoveSrc, MoveDest).
@@ -466,21 +483,15 @@ choose_move(Game, computer1, MoveSrc, MoveDest) :-
 choose_move(Game, computer2, MoveSrc, MoveDest) :-
     choose_move_computer(Game, computer2, MoveSrc, MoveDest).
 
-%% choose_move(Position, computer, Move) :-
-%%     findall(M, move(Position, M), Moves),
-%%     evaluate_and_choose(Moves, Position, (nil, -1000), Move).
-%% 
-%% evaluate_and_choose([Move|Moves], Position, Record, BestMove) :-
-%%     move(Move, Position, Position1),
-%%     value(Position1, Value),
-%%     update(Move, Value, Record, Record1),
-%%     evaluate_and_choose(Moves, Position, Record1, BestMove).
-%% evaluate_and_choose([], Position, (Move, Value), Move).
-%% 
-%% update(Move, Value, (Move1, Value1), (Move1, Value1)) :-
-%%     Value =< Value1.
-%% update(Move, Value, (Move1, Value1), (Move, Value)) :-
-%%     Value > Value1.
+possible_moves(Game, Player, MoveSrc, Moves) :-
+    findall(MoveDest, adjacent(MoveSrc, MoveDest), AllMoves),
+    include(valid_move(Game, Player, MoveSrc), AllMoves, Moves),
+    write(AllMoves), nl, write(Moves).
+
+choose_move_computer(Game, Player, MoveSrc, MoveDest) :-
+    piece(Player, Piece),
+    object(Game, MoveSrc, Piece), !, % get first position %
+    possible_moves(Game, Player, MoveSrc, [MoveDest|Moves]).
 
 %% helpers %%
 
