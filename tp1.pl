@@ -227,21 +227,22 @@ play :- %% TODO: (8, player1, pVSp), ask board size, starting player and game mo
     show_board(Game),
     play(Game, player1, pVSp, _).
 
-game_over([], Player, Result) :-
-    Result = Player.
-game_over([Line|_], _, _) :-
+game_over([], Player, Mode, Result) :-
+    next_player(Mode, Player, P),
+    Result = P.
+game_over([Line|_], _, _, _) :-
     obj_piece(ObjPiece),
     member(ObjPiece, Line), !, fail.
-game_over([_|Lines], Player, Result) :-
-    game_over(Lines, Player, Result).
+game_over([_|Lines], Player, Mode, Result) :-
+    game_over(Lines, Player, Mode, Result).
 
 announce(Result) :-
     write('Game over, '),
     write(Result),
     write(' won!'), nl.
 
-play(Game, Player, _, Result) :-
-    game_over(Game, Player, Result), !, announce(Result).
+play(Game, Player, Mode, Result) :-
+    game_over(Game, Player, Mode, Result), !, announce(Result).
 play(Game, Player, Mode, Result) :-
     write(Player), write(' turn!'), nl,
     choose_move(Game, Player, MoveSrc, MoveDest),
