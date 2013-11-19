@@ -225,10 +225,27 @@ show_piece([LH|LT], LINEN, PIECEN) :-
 
 %% game progression - main method is play %%
 
-play :- %% TODO: (8, computer1, easy, cVSc), ask board size, starting player and game mode %%
-    create_board(8, Game),
+first_player(pVSp, player1).
+first_player(pVSc, player1).
+first_player(cVSc, computer1).
+
+play :-
+    write('Board size: '),
+    read(Size), number(Size),
+    skip_line,
+    write('Mode [pVSp, pVSc, cVSc]: '),
+    read(Mode), gmode(Mode),
+    skip_line,
+    read_diff(Mode, Diff),
+    first_player(Mode, FirstPlayer),
+    create_board(Size, Game),
     show_board(Game),
-    play(Game, computer1, cVSc, normal, _).
+    play(Game, FirstPlayer, Mode, Diff, _).
+    
+read_diff(pVSp, easy) :- !.
+read_diff(_, Diff) :-
+    write('Difficulty [easy, normal]: '),
+    read(Diff), skip_line, diff(Diff).
 
 game_over([], Player, Mode, Result) :-
     next_player(Mode, Player, P),
