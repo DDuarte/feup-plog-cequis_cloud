@@ -497,15 +497,15 @@ find_pieces(Game, Piece, Positions) :-
 distance([L1, C1], [L2, C2], D) :-
     D is sqrt((L1 - L2) * (L1 - L2) + (C1 - C2) * (C1 - C2)).
 
+nearest_aux2(CurrentDist, CandidateDist, CurrentMin, _, CurrentMin, CurrentDist) :-
+    CurrentDist < CandidateDist, !.
+nearest_aux2(_, CandidateDist, _, Candidate, Candidate, CandidateDist).
+
 nearest_aux(_, [], CurrentMin, _, CurrentMin).
 nearest_aux(P, [Candidate|Tail], CurrentMin, CurrentDist, Min) :-
-    distance(Candidate, P, CandidateDist),
-    (
-        CurrentDist < CandidateDist ->
-        nearest_aux(P, Tail, CurrentMin, CurrentDist, Min)
-    ;
-        nearest_aux(P, Tail, Candidate, CandidateDist, Min)
-    ).
+    distance(P, Candidate, CandidateDist),
+    nearest_aux2(CurrentDist, CandidateDist, CurrentMin, Candidate, Min_1, Dist),
+    nearest_aux(P, Tail, Min_1, Dist, Min).
 
 nearest(Position, [H|Tail], Min) :-
     distance(H, Position, D),
