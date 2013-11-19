@@ -64,6 +64,9 @@ piece(player2, b).
 piece(computer1, w).
 piece(computer2, b).
 
+diff(easy).
+diff(normal).
+
 gmode(pVSp). %% player vs player %%
 gmode(pVSc). %% player vs computer %%
 gmode(cVSc). %% computer vs computer %%
@@ -222,10 +225,10 @@ show_piece([LH|LT], LINEN, PIECEN) :-
 
 %% game progression - main method is play %%
 
-play :- %% TODO: (8, player1, pVSp), ask board size, starting player and game mode %%
+play :- %% TODO: (8, computer1, easy, cVSc), ask board size, starting player and game mode %%
     create_board(8, Game),
     show_board(Game),
-    play(Game, player1, pVSp, _).
+    play(Game, computer1, cVSc, normal, _).
 
 game_over([], Player, Mode, Result) :-
     next_player(Mode, Player, P),
@@ -241,15 +244,15 @@ announce(Result) :-
     write(Result),
     write(' won!'), nl.
 
-play(Game, Player, Mode, Result) :-
+play(Game, Player, Mode, _, Result) :-
     game_over(Game, Player, Mode, Result), !, announce(Result).
-play(Game, Player, Mode, Result) :-
+play(Game, Player, Mode, Diff, Result) :-
     write(Player), write(' turn!'), nl,
-    choose_move(Game, Player, MoveSrc, MoveDest),
+    choose_move(Diff, Game, Player, MoveSrc, MoveDest),
     move(Game, MoveSrc, MoveDest, Game1),
     show_board(Game1),
     next_player(Mode, Player, NextPlayer),
-    !, play(Game1, NextPlayer, Mode, Result).
+    !, play(Game1, NextPlayer, Mode, Diff, Result).
 
 next_player(pVSp, player1, player2).
 next_player(pVSp, player2, player1).
@@ -471,27 +474,54 @@ adjacent(Line, Column, LineTo, ColumnTo) :-
     LineTo is Line - 1,
     ColumnTo is Column - 1.
 
-choose_move(Game, player1, MoveSrc, MoveDest) :-
+choose_move(_, Game, player1, MoveSrc, MoveDest) :-
     choose_move_player(Game, player1, MoveSrc, MoveDest).
 
-choose_move(Game, player2, MoveSrc, MoveDest) :-
+choose_move(_, Game, player2, MoveSrc, MoveDest) :-
     choose_move_player(Game, player2, MoveSrc, MoveDest).
 
-choose_move(Game, computer1, MoveSrc, MoveDest) :-
-    choose_move_computer(Game, computer1, MoveSrc, MoveDest).
+choose_move(Diff, Game, computer1, MoveSrc, MoveDest) :-
+    choose_move_computer(Diff, Game, computer1, MoveSrc, MoveDest).
 
-choose_move(Game, computer2, MoveSrc, MoveDest) :-
-    choose_move_computer(Game, computer2, MoveSrc, MoveDest).
+choose_move(Diff, Game, computer2, MoveSrc, MoveDest) :-
+    choose_move_computer(Diff, Game, computer2, MoveSrc, MoveDest).
 
 possible_moves(Game, Player, MoveSrc, Moves) :-
     findall(MoveDest, adjacent(MoveSrc, MoveDest), AllMoves),
-    include(valid_move(Game, Player, MoveSrc), AllMoves, Moves),
-    write(AllMoves), nl, write(Moves).
+    include(valid_move(Game, Player, MoveSrc), AllMoves, Moves).
 
-choose_move_computer(Game, Player, MoveSrc, MoveDest) :-
+find_pieces(Game, Piece, Positions) :-
+    findall(P, object(Game, P, Piece), Positions).
+
+
+distance([L1, C1], [L2, C2], D) :-
+    D is sqrt((L1 - L2) * (L1 - L2) + (C1 - C2) * (C1 - C2)).
+
+nearest_aux(_, [], CurrentMin, _, CurrentMin).
+nearest_aux(P, [Candidate|Tail], CurrentMin, CurrentDist, Min) :-
+    distance(Candidate, P, CandidateDist),
+    (
+        CurrentDist < CandidateDist ->
+        nearest_aux(P, Tail, CurrentMin, CurrentDist, Min)
+    ;
+        nearest_aux(P, Tail, Candidate, CandidateDist, Min)
+    ).
+
+nearest(Position, [H|Tail], Min) :-
+    distance(H, Position, D),
+    nearest_aux(Position, Tail, H, D, Min).
+
+choose_move_computer(easy, Game, Player, MoveSrc, MoveDest) :-
     piece(Player, Piece),
-    object(Game, MoveSrc, Piece), !, % get first position %
-    possible_moves(Game, Player, MoveSrc, [MoveDest|Moves]).
+    object(Game, MoveSrc, Piece), !, % pick first... %
+    possible_moves(Game, Player, MoveSrc, [MoveDest|_]). % pick first... %
+
+choose_move_computer(normal, Game, Player, MoveSrc, MoveDest) :-
+    piece(Player, Piece),
+    find_pieces(Game, Piece, [MoveSrc|_]), % pick first... %
+    possible_moves(Game, Player, MoveSrc, Moves),
+    object(Game, ObjPos, o),
+    nearest(ObjPos, Moves, MoveDest).
 
 %% helpers %%
 
