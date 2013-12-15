@@ -44,7 +44,7 @@ script_request_cpu(220).
 % other
 scripts_to_auth_servers_ratio(2).
 budget(20000).
-requests(100000000).
+requests(1000).
 auth_percentage(25).
 scripts_percentage(60).
 storage_percentage(15).
